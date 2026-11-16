@@ -1,0 +1,1 @@
+sudo -u www bash -c '/usr/bin/php /www/wwwroot/pay.wsx.tax/admin/admin_retry_notify_recent.php >> /www/wwwroot/pay.wsx.tax/admin/retry_notify.log 2>&1'

@@ -1,0 +1,4 @@
+location /wechat/pay/ {
+    rewrite ^/wechat/pay/([^/]+)$ /wechat/pay/index.php?pay_order_no=$1 last;
+    try_files $uri $uri/ /wechat/pay/index.php?$args;
+}

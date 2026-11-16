@@ -1,0 +1,330 @@
+openapi: 3.0.0
+info:
+  title: 支付中心 API 文档
+  version: "1.0"
+  description: |
+    本接口文档基于 `api/` 目录下源码自动生成，当前支持微信支付和通联聚合扫码支付，包含 SaaS 套餐订购/升级业务流程和回调示例。
+servers:
+  - url: https://pay.wsx.tax
+paths:
+  /api/wechat_create_order.php:
+    post:
+      summary: 创建微信支付订单
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - biz_sys
+                - biz_order_no
+                - user_id
+                - amount
+                - subject
+              properties:
+                biz_sys:
+                  type: string
+                  description: 业务系统标识，如 books
+                biz_order_no:
+                  type: string
+                  description: 业务订单号（需唯一）
+                user_id:
+                  type: integer
+                  description: 用户ID
+                amount:
+                  type: number
+                  format: float
+                  description: 金额（元）
+                subject:
+                  type: string
+                  description: 商品名称
+                notify_url:
+                  type: string
+                  format: uri
+                  description: 业务系统回调URL（推荐填写）
+                extra:
+                  type: object
+                  description: 额外扩展字段，任意JSON对象
+            example:
+              biz_sys: books
+              biz_order_no: WX202406051200009999
+              user_id: 12345
+              amount: 199
+              subject: SaaS平台套餐购买-专业版
+              notify_url: https://b.wsx.tax/pay_notify.php
+              extra:
+                plan: pro
+      responses:
+        "200":
+          description: 下单结果
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required:
+                      - code
+                      - msg
+                      - data
+                    properties:
+                      code:
+                        type: integer
+                        example: 0
+                      msg:
+                        type: string
+                        example: ok
+                      data:
+                        type: object
+                        properties:
+                          pay_order_no:
+                            type: string
+                          qrcode_url:
+                            type: string
+                          pay_url:
+                            type: string
+                  - type: object
+                    required:
+                      - code
+                      - msg
+                    properties:
+                      code:
+                        type: integer
+                        example: 1
+                      msg:
+                        type: string
+                        example: 错误信息
+  /api/wechat_notify.php:
+    post:
+      summary: 微信支付回调
+      description: 微信服务器异步通知支付结果。
+      requestBody:
+        required: true
+        content:
+          text/xml:
+            schema:
+              type: string
+              description: 微信支付回调 XML（详见官方文档）
+      responses:
+        "200":
+          description: 回调处理结果
+          content:
+            text/xml:
+              schema:
+                type: string
+                description: 返回微信所需的 XML 结果，SUCCESS 或 FAIL
+  /api/wechat_query_order.php:
+    get:
+      summary: 查询微信订单支付状态
+      parameters:
+        - in: query
+          name: pay_order_no
+          schema:
+            type: string
+          required: true
+          description: 支付订单号
+      responses:
+        "200":
+          description: 查询结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  status:
+                    type: string
+                    example: paid
+                  paid_at:
+                    type: string
+                    example: 2024-06-05 16:00:00
+  /api/allinpay_create_order.php:
+    post:
+      summary: 创建通联聚合支付订单
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - biz_sys
+                - biz_order_no
+                - user_id
+                - amount
+                - subject
+                - paytype
+              properties:
+                biz_sys:
+                  type: string
+                  description: 业务系统标识，如 books
+                biz_order_no:
+                  type: string
+                  description: 业务订单号（需唯一）
+                user_id:
+                  type: integer
+                  description: 用户ID
+                amount:
+                  type: number
+                  format: float
+                  description: 金额（元）
+                subject:
+                  type: string
+                  description: 商品名称
+                paytype:
+                  type: string
+                  description: 支付方式ID（W01:微信，A01:支付宝，U01:云闪付）
+                notify_url:
+                  type: string
+                  format: uri
+                  description: 业务系统回调URL
+                return_url:
+                  type: string
+                  format: uri
+                  description: 支付完成后跳转URL
+                extra:
+                  type: object
+                  description: 额外扩展字段，任意JSON对象
+            example:
+              biz_sys: books
+              biz_order_no: ALLIN202406061626009999
+              user_id: 12345
+              amount: 99
+              subject: SaaS套餐购买-标准版
+              paytype: W01
+              notify_url: https://b.wsx.tax/pay_notify.php
+              return_url: https://b.wsx.tax/pay_result.php
+              extra:
+                plan: standard
+      responses:
+        "200":
+          description: 下单结果
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required:
+                      - code
+                      - msg
+                      - data
+                    properties:
+                      code:
+                        type: integer
+                        example: 0
+                      msg:
+                        type: string
+                        example: ok
+                      data:
+                        type: object
+                        properties:
+                          pay_order_no:
+                            type: string
+                          qrcode_url:
+                            type: string
+                          pay_url:
+                            type: string
+                  - type: object
+                    required:
+                      - code
+                      - msg
+                    properties:
+                      code:
+                        type: integer
+                        example: 1
+                      msg:
+                        type: string
+                        example: 错误信息
+  /api/allinpay_query_order.php:
+    get:
+      summary: 查询通联聚合支付订单状态
+      parameters:
+        - in: query
+          name: pay_order_no
+          schema:
+            type: string
+          required: true
+          description: 聚合支付订单号
+      responses:
+        "200":
+          description: 查询结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  status:
+                    type: string
+                    example: paid
+                  paid_at:
+                    type: string
+                    example: 2025-06-06 16:30:00
+  /api/allinpay_types.php:
+    get:
+      summary: 获取可用聚合支付方式
+      responses:
+        "200":
+          description: 支付方式列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  msg:
+                    type: string
+                    example: ok
+                  pay_types:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: W01
+                        name:
+                          type: string
+                          example: 微信扫码
+  /notify_url示例:
+    post:
+      summary: 业务系统回调
+      description: |
+        支付成功后，支付中心会向 notify_url 发送 POST 请求，参数如下表。
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                biz_order_no:
+                  type: string
+                pay_order_no:
+                  type: string
+                user_id:
+                  type: string
+                amount:
+                  type: string
+                status:
+                  type: string
+                paid_at:
+                  type: string
+                sign:
+                  type: string
+      responses:
+        "200":
+          description: 业务处理响应
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+components:
+  securitySchemes: {}
